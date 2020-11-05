@@ -1,0 +1,165 @@
+---
+title: "Code Show case for evaluators"
+author: "Narayanan Puthillathu"
+output: html_notebook
+---
+# this is a code show case for sample code to doemonstrate the R programing workflow types used in my projects. 
+
+Libraries need for the workflow
+```{r Libraries for the workflow, message=FALSE}
+library(ggplot2)
+library(ggthemes)
+library(dplyr)
+#BiocManager::install("clusterProfiler")
+library(clusterProfiler)
+library(ReactomePA)
+library(RDAVIDWebService)
+# BiocManager::install("org.Mm.eg.db")
+library(org.Mm.eg.db)
+library(gridExtra)
+#library(magick)
+library(topGO)
+```
+
+Import Data
+
+```{r Import Data}
+DEGlist <- read.csv("C:/Users/NP/Downloads/RProjects/ACSS2fastingNGSanalysis/data/Liver_KO_vs_WT_fed.csv")
+```
+
+Extract Enterz IDs as character
+```{r Extract Entrez IDs as character}
+
+
+head(DEGlist)
+DEGlist2 <- as.character(DEGlist$entrez)[abs(DEGlist$logfc) >2]
+head(DEGlist2)
+class(DEGlist2)
+```
+
+# GO enrichment analysis
+
+### Enriched GO Biological Processes 
+```{r}
+#import and filter data
+DEGlist <- read.csv("C:/Users/NP/Downloads/RProjects/ACSS2fastingNGSanalysis/data/Liver_KO_vs_WT_fed.csv")
+DEGlist2 <- as.character(DEGlist$entrez)[abs(DEGlist$logfc) >2]
+
+#GO BP enrichment
+goBP <- enrichGO(DEGlist2, OrgDb = org.Mm.eg.db, 
+                 keyType = "ENTREZID", 
+                 ont = "BP", pvalueCutoff = 0.05, 
+                 pAdjustMethod = "BH", 
+                 qvalueCutoff = 0.2, 
+                 minGSSize = 10, maxGSSize = 500,
+                 readable = FALSE, pool = FALSE)
+
+# convert the S4 data object to ggplot2 compatible dataframe
+goBP2 <- fortify(goBP@result)
+#order dataframe wrt to decreasing gene count.
+goBP3 <- goBP2[order(-goBP2$Count),]
+goBP4 <- goBP3[1:10,]
+
+# sort by p.adjust
+goBP5 <- goBP4[order(goBP4$p.adjust),]
+
+goBPbarplot <- ggplot(data = goBP5, aes(x = goBP5$Description, y = goBP5$Count)) + 
+  theme(text = element_text(size = 20)) + 
+  xlab(NULL) + ylab("Gene Counts") + ggtitle("Enriched GO Biological Processes") + 
+  geom_bar(aes(fill = goBP5$Description), stat = "identity", show.legend = FALSE) + 
+  geom_text(aes(label = goBP5$ID), y = 0, hjust = 0, color = "white") + 
+  geom_text(aes(label = goBP5$GeneRatio),hjust=1, color = "white") + 
+  coord_flip() + scale_y_continuous(expand  = c(0,0)) +
+  theme_classic()
+
+#Save to png
+png("path")
+goBPbarplot
+dev.off()
+
+#clear environment
+rm(list = ls())
+
+```
+
+
+### Enriched GO Molecular Functions
+```{r}
+#import and filter data
+DEGlist <- read.csv("C:/Users/NP/Downloads/RProjects/ACSS2fastingNGSanalysis/data/Liver_KO_vs_WT_fed.csv")
+DEGlist2 <- as.character(DEGlist$entrez)[abs(DEGlist$logfc) >2]
+
+# GO MF enrichment
+goMF <- enrichGO(DEGlist2, OrgDb = org.Mm.eg.db, 
+                 keyType = "ENTREZID", 
+                 ont = "MF", pvalueCutoff = 0.05, 
+                 pAdjustMethod = "BH", 
+                 qvalueCutoff = 0.2, 
+                 minGSSize = 10, maxGSSize = 500,
+                 readable = FALSE, pool = FALSE)
+
+# convert the S4 data object to ggplot2 compatible dataframe
+goMF2 <- fortify(goMF@result)
+#order dataframe wrt to decreasing gene count. 
+goMF3 <- goMF2[order(-goMF2$Count),]
+goMF4 <- goMF3[1:10,]
+#barplot - using barplotNPredefined()###
+goMFbarplot <- ggplot(data = goMF4, aes(x = goMF4$Description, y = goMF4$Count)) + 
+  theme(text = element_text(size = 20)) + 
+  xlab(NULL) + ylab("Gene Counts") + ggtitle("Enriched GO Molecular Functions") + 
+  geom_bar(aes(fill = goMF4$Description), stat = "identity", show.legend = FALSE) + 
+  geom_text(aes(label = goMF4$ID), y = 0, hjust = 0, color = "white") + 
+  geom_text(aes(label = goMF4$GeneRatio),hjust=1, color = "white") + 
+  coord_flip() + scale_y_continuous(expand  = c(0,0)) +
+  theme_classic()
+
+#save to png
+png("path")
+goMFbarplot
+dev.off()
+
+# clear environment
+rm(list = ls())
+
+```
+
+
+### Enriched GO Cellular Compartments
+```{r}
+#import and filter data
+DEGlist <- read.csv("C:/Users/NP/Downloads/RProjects/ACSS2fastingNGSanalysis/data/Liver_KO_vs_WT_fed.csv")
+DEGlist2 <- as.character(DEGlist$entrez)[abs(DEGlist$logfc) >2]
+
+# GO CC enrichment
+goCC <- enrichGO(DEGlist2, OrgDb = org.Mm.eg.db, 
+                 keyType = "ENTREZID", 
+                 ont = "CC", pvalueCutoff = 0.05, 
+                 pAdjustMethod = "BH", 
+                 qvalueCutoff = 0.2, 
+                 minGSSize = 10, maxGSSize = 500,
+                 readable = FALSE, pool = FALSE)
+# convert the S4 data object to ggplot2 compatible dataframe
+goCC2 <- fortify(goCC@result)
+#order dataframe wrt to decreasing gene count. 
+goCC3 <- goCC2[order(-goCC2$Count),]
+goCC4 <- goCC3[1:10,]
+#barplot - using barplotNPredefined()###
+ 
+goCCbarplot <- ggplot(data = goCC4, aes(x = goCC4$Description, y = goCC4$Count)) + 
+  theme(text = element_text(size = 20)) + 
+  xlab(NULL) + ylab("Gene Counts") + ggtitle("Enriched GO Cellular Compartments") + 
+  geom_bar(aes(fill = goCC4$Description), stat = "identity", show.legend = FALSE) + 
+  geom_text(aes(label = goCC4$ID), y = 0, hjust = 0, color = "white") + 
+  geom_text(aes(label = goCC4$GeneRatio),hjust=1, color = "white") + 
+  coord_flip() + scale_y_continuous(expand  = c(0,0)) +
+  theme_classic()
+
+#save to png
+png("path")
+goCCbarplot
+dev.off()
+
+#clear environment
+rm(list = ls())
+
+```
